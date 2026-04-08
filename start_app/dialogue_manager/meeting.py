@@ -25,7 +25,6 @@ from .keys import *
 import threading
 import time
 import os, shutil
-import openai
 import re
 import nltk
 import emoji
@@ -41,39 +40,56 @@ except LookupError:
 from nltk.tokenize import sent_tokenize
 from flask import redirect, url_for
 from .globals import *
-
-openai.api_key = os.environ["azure_openai_key"]
+from .llm import LLM
 
 import queue
 class TimeoutException(Exception):
     pass
 
-def openai_api_call(api, **kwargs):
-    if api == "chat":
-        print("\033[92m>> Using Chat API\033[0m")  # Green text
-        return openai.ChatCompletion.create(
-            # model="gpt-3.5-turbo",
-            engine='Azure-ChatGPT',
-            **kwargs
-        )
-    else:
-        print("\033[94m>> Using Davinci API\033[0m")  # Blue text
-        prompt = "- " + '\n- '.join([m["content"] for m in kwargs["messages"] if m["role"] == "system"]) + "\n" + kwargs["messages"][-1]["content"]
-        # print("Prompt: ", prompt)
-        del kwargs["messages"]
-        kwargs["prompt"] = prompt
-        return openai.Completion.create(
-            engine="text-davinci-002", 
-            **kwargs
-        )
+_meeting_llm = LLM()
+
+
+def gemini_chat_call(messages, max_tokens=150, temperature=0.7, stop=None):
+    """Convert OpenAI-style messages to a single Gemini call."""
+    system_parts = []
+    user_parts = []
+    for msg in messages:
+        if msg["role"] == "system":
+            system_parts.append(msg["content"])
+        else:
+            user_parts.append(msg["content"])
+
+    system_instruction = "\n".join(system_parts) if system_parts else None
+    contents = "\n".join(user_parts) if user_parts else ""
+
+    from google.genai import types
+    from .llm import _client, MODEL
+
+    response = _client.models.generate_content(
+        model=MODEL,
+        contents=contents,
+        config=types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            max_output_tokens=max_tokens,
+            temperature=temperature,
+        ),
+    )
+    return response.text
+
 
 def api_call_with_timeout(api, timeout, **kwargs):
     q = queue.Queue()
+    messages = kwargs.get("messages", [])
+    max_tokens = kwargs.get("max_tokens", 150)
+    temperature = kwargs.get("temperature", 0.7)
+    stop = kwargs.get("stop", None)
+
     def target():
         try:
-            q.put(openai_api_call(api, **kwargs))
+            q.put(gemini_chat_call(messages, max_tokens, temperature, stop))
         except Exception as e:
             q.put(e)
+
     thread = threading.Thread(target=target)
     thread.start()
     thread.join(timeout)
@@ -294,12 +310,8 @@ class Meeting:
         response_text = ""
         while response_text not in accepted_emotions and num_max_attempts > 0:
             try:
-                response = openai.ChatCompletion.create(
-                    # model="gpt-3.5-turbo",
-                    engine='Azure-ChatGPT',
-                    messages = user_query
-                )
-                response_text = response['choices'][0]['message']['content'].strip().upper()
+                result = _meeting_llm.ask(user_query[0]["content"])
+                response_text = result.strip().upper()
                 response_text = re.sub(r'[^A-Z]+', '', response_text)
             except:
                 response_text = "NEUTRAL"
@@ -312,20 +324,9 @@ class Meeting:
         print(">>> Summarizing history... <<<")
         context = self.history_summary + "\n\n" + '\n'.join(self.history[-self.min_history_to_remember*2:-self.min_history_to_remember])
         try:
-            response = openai.ChatCompletion.create( # [TODO] Automate this whole part with LLM class
-                # model="gpt-3.5-turbo",
-                engine='Azure-ChatGPT',
-                messages= [
-                    {"role": "system", "content": "Summerize the conversation so far in English, in less than 250 words."},
-                    {"role": "user", "content": context}
-                ],
-                temperature=1,
-                max_tokens=300,
-                top_p=1,
-                frequency_penalty=0.4,
-                presence_penalty=0.4
-            )
-            self.history_summary = self.clean_response(response["choices"][0]["message"]["content"].strip())
+            summary_llm = LLM("Summarize the conversation so far in English, in less than 250 words.")
+            result = summary_llm.ask(context, max_tokens=300, temperature=1.0)
+            self.history_summary = self.clean_response(result.strip())
             self.ready_prompt()  ## [TODO] Need to call child class's ready_prompt
             self.prompt += "\nConversation so far:" + self.history_summary + "\n\n---\n"
             self.prompt += '\n\n'.join(self.history[-self.min_history_to_remember:])
@@ -386,20 +387,15 @@ class Meeting:
         try:
             while not bot_response and num_max_tries > 0:
                 try:
-                    # Getting timeout amount from JSON file
                     timeout_val = languages[self.language]["timeout"]*2
-                    response = api_call_with_timeout(api, timeout_val, **kwargs)
-                    bot_response = response["choices"][0]["message"]["content"].strip().replace("Doc", "doc") if api == "chat" else response["choices"][0]["text"].strip().replace("Doc", "doc")
-                    if self.language == "en-US": # NLTK doesn't support all languages
+                    response_text = api_call_with_timeout(api, timeout_val, **kwargs)
+                    bot_response = response_text.strip().replace("Doc", "doc") if response_text else ""
+                    if self.language == "en-US":
                         bot_response = self.clean_response(bot_response)
-                    if not bot_response:
-                        api = apis[(apis.index(api) + 1) % len(apis)]  # move to the next API in the sequence
                 except TimeoutException:
-                    print(f"\tAPI call timed out after {timeout_val} seconds. Trying next API...")
-                    api = apis[(apis.index(api) + 1) % len(apis)]  # move to the next API in the sequence
+                    print(f"\tAPI call timed out after {timeout_val} seconds. Retrying...")
                 except Exception as e:
                     print(f"Exception occurred: {e}")
-                    api = apis[(apis.index(api) + 1) % len(apis)]  # move to the next API in the sequence
                 num_max_tries -= 1
         except Exception as e:
             print(f"Exception occurred: {e}")

@@ -14,161 +14,117 @@
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
 
-import openai
-from .keys import *
+import os
 import json
+import time
+from google import genai
+from google.genai import types
+
+
+_client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+MODEL = "gemini-2.5-flash"
+
 
 class LLM:
     def __init__(self, instruction=""):
         self.system_messages = []
         if instruction:
-            self.system_messages.append({"role": "system", "content": instruction})
+            self.system_messages.append(instruction)
         self.max_tokens = 150
 
     def add_content(self, content):
-        self.system_messages.append({"role": "system", "content": content})
-    
+        self.system_messages.append(content)
+
     def add_example(self, format):
-        self.system_messages.append({"role": "system", "content": "Use the following format: " + format})
+        self.system_messages.append("Use the following format: " + format)
 
     def add_system_message(self, message):
-        self.system_messages.append({"role": "system", "content": message})
+        self.system_messages.append(message)
 
     def get_system_messages(self):
-        system_messages = ""
-        for message in self.system_messages:
-            system_messages += message["content"] + "\n"
-        system_messages += "\n"
-        return system_messages
-    
-    def ret_JSON(self, text=""):
-        turn = 3
-        ret_JSON = {}
-        while turn > 0:
-            ret_string = self.ask_chat(text).strip()
+        return "\n".join(self.system_messages) + "\n"
+
+    def ask(self, question, max_tokens=None, temperature=0.7):
+        if max_tokens is None:
+            max_tokens = self.max_tokens
+        system_instruction = self.get_system_messages() if self.system_messages else None
+
+        try:
+            response = _client.models.generate_content(
+                model=MODEL,
+                contents=question,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    max_output_tokens=max_tokens,
+                    temperature=temperature,
+                ),
+            )
+            return response.text
+        except Exception as e:
+            print(f"[Gemini] API 호출 실패: {e}")
+            # 1회 재시도
+            time.sleep(3)
             try:
-                ret_JSON = json.loads(ret_string)
-                if ret_JSON:
-                    print(f"ret_JSON: {ret_JSON}")
-                    break
-            except:
+                response = _client.models.generate_content(
+                    model=MODEL,
+                    contents=question,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        max_output_tokens=max_tokens,
+                        temperature=temperature,
+                    ),
+                )
+                return response.text
+            except Exception as e2:
+                print(f"[Gemini] 재시도 실패: {e2}")
+                return "죄송합니다. 일시적인 오류가 발생했습니다. 다시 시도해주세요."
+
+    def ret_JSON(self, text=""):
+        system_instruction = self.get_system_messages() if self.system_messages else None
+        turn = 3
+        while turn > 0:
+            try:
+                response = _client.models.generate_content(
+                    model=MODEL,
+                    contents=text,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        max_output_tokens=self.max_tokens,
+                        temperature=0.7,
+                        response_mime_type="application/json",
+                    ),
+                )
+                ret = json.loads(response.text)
+                if ret:
+                    print(f"ret_JSON: {ret}")
+                    return ret
+            except Exception:
                 print("Error parsing generated JSON. Trying again.")
             turn -= 1
-        
-        return ret_JSON
+        return {}
 
-    def chat_generate(self, text):
-        prompt = [{"role": "user", "content": text}]
-        response = openai.ChatCompletion.create(
-            engine='Azure-ChatGPT',
-            max_tokens=self.max_tokens,
-            temperature=0.7,
-            messages=prompt
-        )
-        response_text = response['choices'][0]['message']['content']
-        print(f"response: {response_text}")
-        return response_text
-    
-    def ask_chat(self, question, max_tokens=150):
-        if question:
-            prompt = [
-                {"role": "user", "content": question}
-                ]
-        else:
-            prompt = []
-        response = openai.ChatCompletion.create(
-            engine='Azure-ChatGPT',
-            max_tokens=max_tokens,
-            temperature=0.7,
-            messages=self.system_messages + prompt
-        )
-        response_text = response['choices'][0]['message']['content']
-        return response_text
-    
-    def temp_ask_chat(self, question): # Longer max_tokens for feedback json
-        if question:
-            prompt = [
-                {"role": "user", "content": question}
-                ]
-        else:                
-            prompt = []
-        response = openai.ChatCompletion.create(
-            engine='Azure-ChatGPT',
-            max_tokens=500,
-            temperature=0.7,
-            messages=self.system_messages + prompt
-        )
-        response_text = response['choices'][0]['message']['content']
-        return response_text
-    
-    def davinci_generate(self, text):
-        response = openai.Completion.create(
-            engine="davinci",
-            prompt= self.get_system_messages() + text,
-            max_tokens=self.max_tokens,
-            temperature=0.7,
-            top_p=1,
-            frequency_penalty=0.4,
-            presence_penalty=0
-        )
-        response_text = response['choices'][0]['text']
-        print(f"response: {response_text}")
-        return response_text
-    
-    # Before this function, all the gpt calls were on the non-gpt4 model.
-    # I treated this function as an exception and *temporarily* changed the api_key, api_base, and api_version.
-    # If we plan to make more use of gpt4 throughout the project, we should modify keys.py and globals.py accordingly.
-    def ask_gpt4(self, question, max_tokens=150):
-        print("GPT 4 CALL -----------------------------------")
-        openai.api_type = "open_ai"
-        openai.api_key = os.environ["openai_key"]
-        openai.api_base = "https://api.openai.com/v1"
-        openai.api_version = None
-        
-        if question:
-            prompt = [
-                {"role": "user", "content": question}
-                ]
-        else:
-            prompt = []
-            
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages= self.system_messages + prompt,
-            max_tokens=max_tokens,
-            temperature=0.7,
-            top_p=1,
-            frequency_penalty=0.4,
-            presence_penalty=0
-        )
-        response_text = response['choices'][0]['message']['content']
-
-        openai.api_type = os.environ["api_type"]
-        openai.api_key = os.environ["azure_openai_key"]
-        openai.api_base = os.environ["api_base"]
-        openai.api_version = os.environ["api_version"]
-        
-        return response_text
-    
     def check_generation(self, text):
-        prompt = [
-            {"role": "system", "content": "Respond YES or NO. Does this Generated Text follow the Instructions properly?"},
-            {"role": "system", "content": "Instructions:\n----\n" + self.get_system_messages() + "\n----\n"},
-            {"role": "system", "content": "Generated Text:\n----\n" + text + "\n----\n"},
-            ]
-        response = openai.ChatCompletion.create(
-            engine='Azure-ChatGPT',
-            max_tokens=self.max_tokens,
-            temperature=0.7,
-            messages=prompt
+        check_prompt = (
+            "Respond YES or NO. Does this Generated Text follow the Instructions properly?\n"
+            f"Instructions:\n----\n{self.get_system_messages()}----\n"
+            f"Generated Text:\n----\n{text}\n----\n"
         )
-        response_text = response['choices'][0]['message']['content']
-        response_text = response_text[:3].lower().strip()
-        if response_text == "yes":
-            return True
-        else:
-            return False
+        response_text = self.ask(check_prompt)
+        return response_text[:3].lower().strip() == "yes"
+
+    # Backward-compatible aliases
+    def chat_generate(self, text):
+        return self.ask(text)
+
+    def ask_chat(self, question, max_tokens=150):
+        return self.ask(question, max_tokens=max_tokens)
+
+    def temp_ask_chat(self, question):
+        return self.ask(question, max_tokens=500)
+
+    def ask_gpt4(self, question, max_tokens=150):
+        return self.ask(question, max_tokens=max_tokens)

@@ -7,7 +7,6 @@ flask_sqlalchemy
 gevent-websocket
 google-search-results
 nltk
-openai==0.28.1
 opencv-python
 pandas
 pydub

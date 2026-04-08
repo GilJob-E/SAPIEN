@@ -20,21 +20,16 @@
 
 from dialogue_manager.globals import *
 from dialogue_manager.usecases import *
+from dialogue_manager.llm import LLM
 import fitz
 import string
 from pydub import AudioSegment
 from bs4 import BeautifulSoup
 
+_utils_llm = LLM()
+
 def ask_gpt(text):
-    prompt = [{"role": "user", "content": text}]
-    response = openai.ChatCompletion.create(
-        # model="gpt-3.5-turbo",
-        engine='Azure-ChatGPT',
-        max_tokens=100,
-        temperature=0.7,
-        messages=prompt
-    )
-    response_text = response['choices'][0]['message']['content']
+    response_text = _utils_llm.ask(text, max_tokens=100)
     print(f"response: {response_text}")
     return response_text
 

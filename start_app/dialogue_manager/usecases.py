@@ -170,34 +170,16 @@ class Interview(Meeting):
         self.feedback = ""
 
     def prepare_interview(self):
+        from concurrent.futures import ThreadPoolExecutor
+
         llm = LLM()
         print("llm created")
         llm.add_content("Resume:\n----\n"+ self.resume+"\n---\n")
         llm.add_content("Job Position:\n----\n"+ self.job_position+"\n---\n")
         llm.add_content("Job Posting:\n----\n" +self.job_posting+"\n---\n")
 
-        # extraction_question = """Extract the following information from the resume and job posting. Follow the example JSON dictionary format. \n\nExample Format for extraction: {"first_name": "FirstName", "last_name": "LastName", "organization": "Organization Name", "job_position": "Job Position", "interviewer_position": "A possible position of an interviewer who would be interviewing for this job. (e.g. a senior person in that organization)"}\n\nDo not print anything else. Only print the information in the example format. If any information is missing, print 'UNK'.\n"""
-        # try:
-        #     generated = llm.ask_chat(extraction_question).strip()
-        #     parsed_generated = json.loads(generated)
-        # except:
-        #     print("Error parsing generated JSON. Please try again.")
-        #     return
-        # ## Extract information
-        # self.user.firstname = parsed_generated["first_name"]
-        # self.user.lastname = parsed_generated["last_name"]
-        # self.organization = parsed_generated["organization"]
-        # self.job_position = parsed_generated["job_position"]
-        # self.interviewer_position = parsed_generated["interviewer_position"]
-
         interviewer_position_question = f"Name a post of an interviewer who is suitable to conduct an interview for the following position.\n\nJob description:\nPosition: {self.job_position}\nCompany: {self.organization}\n\nInterviewer post:\n"
-        self.interviewer_position = llm.ask_chat(interviewer_position_question).strip()
-
-        # evaluation_question = f"If you are an interviewer {self.interviewer_position} at {self.organization} and you are interviewing the candidate with the above Resume for a {self.job_position} position at {self.organization}, what would be your evaluation criteria? (e.g. skills, experience, etc.) Don't say anything else. Write in one paragraph.\n"
-        # self.evaluation_criteria = llm.ask_chat(evaluation_question).strip()
-
-        # llm.add_content("Evaluation Criteria:\n---\n"+ self.evaluation_criteria+"\n---\n")
-        # print('\033[92m' + "self.evaluation_criteria: " + '\033[0m' + f"{self.evaluation_criteria}")
+        self.interviewer_position = llm.ask(interviewer_position_question).strip()
 
         plan_question = f"""Write {self.num_questions} questions to evaluate the following candidate for the following job position.
 
@@ -209,18 +191,22 @@ Job posting: \n{self.job_posting}
 Candidate Resume: \n{self.resume}
 ---
 {self.num_questions} Questions:\n"""
-        
-        self.plan = llm.ask_gpt4(plan_question).strip()
-        print('\033[92m' + "self.plan: " + '\033[0m' + f"{self.plan}")
 
         resume_summary_question = f"Summerize the Resume in one paragraph, based on relevancy to the job position. If you can't answer, say UNK. Don't say anything else.\n"
-        # self.resume_summary = llm.ask_gpt4(resume_summary_question).strip()
-        self.resume_summary = llm.ask_chat(resume_summary_question).strip()
-        print('\033[92m' + "self.resume_summary: " + '\033[0m' + f"{self.resume_summary}")
-
         job_posting_summary_question = f"Summerize the Job Posting in one paragraph, based on relevancy to the Resume position. If you can't answer, say UNK. Don't say anything else.\n"
-        # self.job_posting_summary = llm.ask_gpt4(job_posting_summary_question).strip()
-        self.job_posting_summary = llm.ask_chat(job_posting_summary_question).strip()
+
+        # 3개 독립 호출 병렬 실행
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            plan_future = executor.submit(llm.ask, plan_question)
+            resume_future = executor.submit(llm.ask, resume_summary_question)
+            job_future = executor.submit(llm.ask, job_posting_summary_question)
+
+            self.plan = plan_future.result().strip()
+            self.resume_summary = resume_future.result().strip()
+            self.job_posting_summary = job_future.result().strip()
+
+        print('\033[92m' + "self.plan: " + '\033[0m' + f"{self.plan}")
+        print('\033[92m' + "self.resume_summary: " + '\033[0m' + f"{self.resume_summary}")
         print('\033[92m' + "self.job_posting_summary: " + '\033[0m' + f"{self.job_posting_summary}")
 
 

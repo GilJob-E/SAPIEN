@@ -14,24 +14,15 @@
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
 
-import openai
-from openai import AzureOpenAI
-
-client = AzureOpenAI(api_version=os.environ["api_version"],
-api_key=os.environ["azure_openai_key"])
 import random
 import os
-# from .keys import *
-# openai.api_key = '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' # GPT-4 key for Cengiz's account, let's not use it right now.
-# openai.api_key = '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' # GPT-3 key for Masum's account
+from dialogue_manager.llm import LLM
 
-# TODO: The 'openai.api_base' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(api_base=os.environ["api_base"])'
-# openai.api_base = os.environ["api_base"]
-
+_feedback_llm = LLM()
 
 
 def create_prompt(tags, meeting):
@@ -45,25 +36,17 @@ def create_prompt(tags, meeting):
     prompt += f"\nDo not provide feedback for {meeting.bot.firstname}\n\n"
 
     prompt += f"Conversation Transcript:\n{transcript}\n\n"
-    
+
     prompt += "Please write your feedback below, using the metrics above to guide your evaluation:\n"
 
     return prompt
 
 def generate_feedback(tags, meeting):
-    # transcript = meeting.get_transcript()
     if tags[0] == "Insufficient meeting information." or not meeting or not meeting.get_transcript():
         return "Insufficient meeting information."
-    
-    prompt = [{"role": "user", "content": create_prompt(tags, meeting)}]
 
     try:
-        response = client.chat.completions.create(model='Azure-ChatGPT',
-        max_tokens=500,
-        temperature=0.6,
-        messages = prompt)
-
-        response_text =  response.choices[0].message.content
+        response_text = _feedback_llm.ask(create_prompt(tags, meeting), max_tokens=500, temperature=0.6)
     except:
         response_text = "Error. Please try again."
 
@@ -71,12 +54,7 @@ def generate_feedback(tags, meeting):
 
 def ask_gpt(text):
     try:
-        prompt = [{"role": "user", "content": text}]
-        response = client.chat.completions.create(model='Azure-ChatGPT',
-        max_tokens=100,
-        temperature=0.6,
-        messages=prompt)
-        response_text = response['choices'][0]['message']['content']
+        response_text = _feedback_llm.ask(text, max_tokens=100, temperature=0.6)
         print(f"response: {response_text}")
     except:
         response_text = "None"
@@ -95,7 +73,7 @@ def get_feedback_keypoints(meeting):
         goal_prompt = f"What was the goal of {meeting.user.firstname} in the conversation? If the goal is not clear, say [Unclear] and don't say anything else.\n\n---\n{transcript}\n---\n"
         goal = ask_gpt(goal_prompt)
         meeting.goal = goal
-    
+
     keypoints = ["Clear", "Engaging", "Concise", "Confident", "Empathetic", "Inspiring", "Inclusive", "Respectful", "Honest", "Open-minded", "Patient", "Positive", "Supportive", "Trustworthy", "Understanding"]
 
     if "[unclear]" in premise.lower() and "[unclear]" in goal.lower():
@@ -128,22 +106,18 @@ def get_feedback_keypoints(meeting):
             print("Newline detected")
             keypoints_found = False
             continue
-        # Check if all keypoints are unique
         if len(keypoints) != len(set(keypoints)):
             print("Duplicate keypoints")
             keypoints_found = False
             continue
-        # Check if 3 keypoints are found 
         if len(keypoints) != 3:
             print(len(keypoints), "keypoints found")
             keypoints_found = False
             continue
-        # Check if all keypoints are not empty
         if all(keypoint == "" for keypoint in keypoints):
             print("Empty keypoints")
             keypoints_found = False
             continue
-        # check if all keypoints are not too long
         if any(len(keypoint) > 100 for keypoint in keypoints):
             print("Keypoint too long")
             keypoints_found = False
