@@ -19,7 +19,6 @@
 
 
 import os
-import struct
 import wave
 from .keys import *
 from .globals import *

@@ -18,7 +18,6 @@
 # THE SOFTWARE.
 
 
-import os
 import whisper
 import torch
 import warnings
