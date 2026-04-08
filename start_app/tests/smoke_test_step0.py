@@ -13,7 +13,7 @@ from dialogue_manager.keys import *
 
 
 def test_gemini_vision():
-    """Gemini 2.0 Flash - 모델 검증 + Vision API latency 측정"""
+    """Gemini 3 Flash - 모델 검증 + Vision API latency 측정"""
     from google import genai
     from PIL import Image
     import io
