@@ -78,7 +78,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 DB_Instances, Waitlist = init_db(db)
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins=os.environ.get('CORS_ORIGINS', 'http://localhost:*').split(','))
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
 
@@ -1246,7 +1246,7 @@ if __name__ == '__main__':
             db.create_all()
 
         app.logger.debug("In app.py, starting app...")
-        socketio.run(app, debug=True, host='0.0.0.0', port=port, use_reloader=False)
+        socketio.run(app, debug=os.environ.get('FLASK_DEBUG', 'False').lower() == 'true', host='0.0.0.0', port=port, use_reloader=False)
     except Exception as e:
         for meeting_id in active_meetings:
             if active_meetings[meeting_id].stop_event is not None:

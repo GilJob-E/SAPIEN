@@ -14,156 +14,82 @@
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
 
-# https://docs.microsoft.com/en-US/azure/cognitive-services/speech-service/get-started-text-to-speech?pivots=programming-language-python&tabs=terminal
-
-import azure.cognitiveservices.speech as speechsdk
-from .keys import *
 import os
-from scipy.io import wavfile
-import random
+import wave
+from .keys import *
 from .globals import *
-import requests
+from elevenlabs import ElevenLabs, VoiceSettings
 
-# Default voices from Elevenlabs
-voice_id_map = {
-    'Rachel': '21m00Tcm4TlvDq8ikWAM',
-    'Domi': 'AZnzlk1XvdvUeBnXmlld',
-    'Bella': 'EXAVITQu4vr4xnSDxMaL',
-    'Antoni': 'ErXwobaYiN019PkySvjV',
-    'Elli': 'MF3mGyEYCl7XYWbV9V6O',
-    'Josh': 'TxGEqnHWrfWFTfGW9XjX',
-    'Arnold': 'VR6AewLTigWG4xSOukaG',
-    'Adam': 'pNInz6obpgDQGcFmaJgB',
-    'Sam': 'yoZ06aMxZJJ28mfd3POQ'
+
+EMOTION_SETTINGS = {
+    'NEUTRAL':   VoiceSettings(stability=0.7, similarity_boost=0.75, style=0.0),
+    'HAPPY':     VoiceSettings(stability=0.5, similarity_boost=0.75, style=0.5),
+    'SAD':       VoiceSettings(stability=0.9, similarity_boost=0.75, style=0.2),
+    'ANGRY':     VoiceSettings(stability=0.3, similarity_boost=0.75, style=0.7),
+    'SURPRISED': VoiceSettings(stability=0.4, similarity_boost=0.75, style=0.6),
+    'AFRAID':    VoiceSettings(stability=0.8, similarity_boost=0.75, style=0.3),
+    'DISGUSTED': VoiceSettings(stability=0.8, similarity_boost=0.75, style=0.4),
 }
 
-male_voices_11 = ['Arnold', 'Adam', 'Sam', 'Josh']
-female_voices_11 = ['Rachel', 'Domi', 'Bella', 'Elli']
-all_voices_11 = list(voice_id_map.keys())
+_eleven_client = ElevenLabs(api_key=os.environ.get("ELEVENLABS_API_KEY", ""))
 
 
 class Text2Speech:
-  def __init__(self):
-    self.voice = None
-    self.audiodir = None
-    self.audiofile = None
-    self.language = None
-    self.pronoun = None
+    def __init__(self):
+        self.voice_id = None
+        self.audiodir = None
+        self.audiofile = None
+        self.language = None
+        self.pronoun = None
 
-  def set_audio(self, bot_name, pronoun, language='en-US', audiodir=None, audiofile=None):
-    global all_voices, vocal_mapping
-    self.language = language
-    self.pronoun = pronoun
+    def set_audio(self, bot_name, pronoun, language='en-US', audiodir=None, audiofile=None):
+        self.language = language
+        self.pronoun = pronoun
+        self.voice_id = os.environ.get("ELEVENLABS_VOICE_ID", "")
+        self.audiodir = audiodir
+        self.audiofile = audiofile
+        print(f"[TTS] ElevenLabs voice_id: {self.voice_id}")
 
-    bot_voice_key = sum(ord(char) for char in bot_name)
-    
-    if pronoun in vocal_mapping:
-      num_voices = len(vocal_mapping[pronoun.lower()][language])
-      bot_voice_id = bot_voice_key % num_voices
-      self.voice = vocal_mapping[pronoun.lower()][language][bot_voice_id]
-      print(f"Selected Voice is {self.voice}")
-    else:
-      num_voices = len(all_voices[language])
-      bot_voice_id = bot_voice_key % num_voices
-      self.voice = all_voices[language][bot_voice_id]
-    self.audiodir = audiodir
-    self.audiofile = audiofile
+    def create_wav(self, text, emo='NEUTRAL', ssml=True):
+        global wav_lock, emotion_ready
+        text = text.strip()
+        if not text:
+            text = languages[self.language]['connection_interruption']
 
+        voice_settings = EMOTION_SETTINGS.get(emo.upper(), EMOTION_SETTINGS['NEUTRAL'])
 
-  def get_ssml(self, voice, text, emo):
-    print(f"self.voice is {self.voice}")
-    global SSML_mapping, emotion_ready
-    template = """
-      <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="{}">
-          <voice name="{}" style="{}">
-              {}
-          </voice>
-      </speak>
-      """
-    ssml_style = ""
-    if emo.upper() in SSML_mapping:
-      ssml_style = SSML_mapping[emo.upper()]
-      print("ssml_style: ", ssml_style)
-    ssml = template.format(voice[:5], voice, ssml_style, text)
-    return ssml
+        with wav_lock:
+            emotion_ready[0] = emo
 
-  def create_wav(self, text, emo='NEUTRAL', ssml=True):
-    global wav_lock, languages, emotion_ready
-    text = text.strip()
-    if not text:
-      text = languages[self.language]['connection_interruption']
+            try:
+                audio_generator = _eleven_client.text_to_speech.convert(
+                    voice_id=self.voice_id,
+                    text=text,
+                    model_id="eleven_multilingual_v2",
+                    output_format="pcm_16000",
+                    voice_settings=voice_settings,
+                )
+                pcm_data = b"".join(audio_generator)
 
-    speech_config = speechsdk.SpeechConfig(subscription=os.environ["azure_subscription"], region=os.environ["azure_region"])
-    speech_config.speech_synthesis_voice_name = self.voice
-    audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True, filename=str(self.audiofile))
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-    
-    with wav_lock:
-      emotion_ready[0] = emo
+                # PCM → WAV (16kHz, 16-bit, mono)
+                with wave.open(str(self.audiofile), 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(16000)
+                    wf.writeframes(pcm_data)
 
-      if ssml:
-        if emo.upper() == 'NEUTRAL':
-          speech_synthesizer.speak_text_async(text).get()
-        else:
-          ssml = self.get_ssml(self.voice, text, emo)
-          speech_synthesizer.speak_ssml_async(ssml).get()
+                print(f"[TTS] WAV 생성 완료: {len(pcm_data)} bytes, emotion={emo}")
 
-      else:
-        speech_synthesizer.speak_text_async(text).get()
-
-  def create_wav_11(self, text):
-
-    stability = 0.5
-    sim_boost = 0.5
-    
-    if self.pronoun.lower().strip() == 'he/him':
-      voice_id = voice_id_map[random.choice(male_voices_11)]
-    elif self.pronoun.lower().strip() == 'she/her':
-      voice_id = voice_id_map[random.choice(female_voices_11)]
-    else:
-      voice_id = voice_id_map[random.choice(all_voices_11)]
-
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-
-    headers = {
-        "Accept": "audio/wav",
-        "Content-Type": "application/json",
-        "xi-api-key": os.environ["11labs"],
-    }
-
-    data = {
-        "text": text,
-        "model_id": "eleven_monolingual_v1",
-        "voice_settings": {
-            "stability": stability,
-            "similarity_boost": sim_boost
-        },
-    }
-
-    response = requests.post(url, json=data, headers=headers)
-
-    CHUNK_SIZE = 1024
-    with open(f"{self.audiofile}", 'wb') as f:
-        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-            if chunk:
-                f.write(chunk)
-
-
-  def speak_text(self, text, emo='neutral'):
-    speech_config = speechsdk.SpeechConfig(subscription=os.environ["azure_subscription"], region=os.environ["azure_region"])
-    speech_config.speech_synthesis_voice_name = self.voice
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-    result = speech_synthesizer.speak_text_async(text).get()
-    print(len(result.audio_data))
-
-    samplerate, signal = wavfile.read(self.audiofile)
-    print(len(signal))
-
-    
-  def test_wav(self):
-    samplerate, signal = wavfile.read(self.audiofile)
-    print(len(signal))
+            except Exception as e:
+                print(f"[TTS] ElevenLabs 호출 실패: {e}")
+                # 무음 WAV 생성 (폴백)
+                silence = b'\x00\x00' * 16000  # 1초 무음
+                with wave.open(str(self.audiofile), 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(16000)
+                    wf.writeframes(silence)
