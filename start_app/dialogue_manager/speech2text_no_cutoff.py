@@ -27,7 +27,8 @@ import time
 path = os.getcwd() 
 # Creates an instance of a speech config with specified subscription key and service region. 
 # Replace with your own subscription key and region identifier from here: https://aka.ms/speech/sdkregion 
-speech_key, service_region = "b4d4cae43985ca943c561fec", "eastus" 
+speech_key = os.environ.get("azure_subscription", "")
+service_region = os.environ.get("azure_region", "eastus")
 speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region) 
  
  

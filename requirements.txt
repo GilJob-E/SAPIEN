@@ -1,4 +1,3 @@
-azure-cognitiveservices-speech
 deepface
 emoji
 faiss-cpu
@@ -17,3 +16,6 @@ pylivelinkface
 pymupdf
 scipy
 sentence-transformers
+google-genai
+elevenlabs
+openai-whisper

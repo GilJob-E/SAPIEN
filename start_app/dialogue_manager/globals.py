@@ -24,7 +24,6 @@ import os
 import sys
 import time
 from pathlib import Path
-import openai
 from .keys import *
 from threading import Lock
 from pathlib import Path
@@ -37,10 +36,6 @@ MAX_INSTANCES = 2
 root_path = Path(__file__).parent.parent.absolute()
 print("root_path: ", root_path)
 
-openai.api_type = os.environ["api_type"]
-openai.api_base = os.environ["api_base"]
-openai.api_version = os.environ["api_version"]
-openai.api_key = os.environ["azure_openai_key"]
 
 # audiodir = os.path.join(root_path, "audio\\instance1\\generated_speech\\")
 # audiodir = root_path / Path("audio/instance1/generated_speech/")

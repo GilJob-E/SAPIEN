@@ -56,7 +56,7 @@ log.setLevel(logging.ERROR)
 UPLOAD_FOLDER = Path('files/resume/') ## [MULTIUSER]
 
 app = Flask(__name__)
-app.secret_key = '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' #FIXME: get this outta here quick
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
 
 db_path = Path(f"{root_path}/files/db")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
