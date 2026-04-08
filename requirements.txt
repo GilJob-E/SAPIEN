@@ -1,4 +1,3 @@
-azure-cognitiveservices-speech
 deepface
 emoji
 faiss-cpu
@@ -8,7 +7,7 @@ flask_sqlalchemy
 gevent-websocket
 google-search-results
 nltk
-openai==0.28.1
+openai
 opencv-python
 pandas
 pydub
@@ -17,3 +16,6 @@ pylivelinkface
 pymupdf
 scipy
 sentence-transformers
+google-genai
+elevenlabs
+openai-whisper
