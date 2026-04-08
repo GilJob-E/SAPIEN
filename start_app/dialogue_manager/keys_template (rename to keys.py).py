@@ -14,18 +14,14 @@
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
 import os
 
-os.environ["azure_subscription"], os.environ["azure_region"] = "AZURE_API_KEY", "eastus"
-
-os.environ["api_type"] = "azure"
-os.environ["api_base"] = "https://sapien-azure-openai.openai.azure.com/"
-os.environ["api_version"] = "DATE"
-
-os.environ["azure_openai_key"] =  "AZURE_OPENAI_KEY" # Azure key 
-os.environ["openai_key"] =  "OPENAI_API_KEY"
-
 os.environ["SERP_API_KEY"] = "SERP_API_KEY"
+
+# --- Gemini / ElevenLabs / Whisper ---
+os.environ["GOOGLE_API_KEY"] = "YOUR_GOOGLE_API_KEY"
+os.environ["ELEVENLABS_API_KEY"] = "YOUR_ELEVENLABS_API_KEY"
+os.environ["ELEVENLABS_VOICE_ID"] = "YOUR_ELEVENLABS_VOICE_ID"
