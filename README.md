@@ -17,35 +17,65 @@ Masum Hasan, Cengiz Ozel, Sammy Potter, Ehsan Hoque (ACIIW 2023)
 
 ## How to run
 
-Works on any OS
+Works on any OS. This fork uses Gemini + ElevenLabs + Whisper (original SAPIEN used Azure).
 
-This `main` branch contains `prerendered` version that runs on a single computer. For real-time rendering using Unreal Engine 5.2 on a GPU, please visit `real-time-render` branch.
+### 1. Clone and install
 
-
-```
-git clone https://github.com/ROC-HCI/SAPIEN.git
+```bash
+git clone https://github.com/GilJob-E/SAPIEN.git
 cd SAPIEN
 pip install -r requirements.txt
+pip install --upgrade transformers  # sentence-transformers 호환성
 ```
 
-- Download the folder: https://rochester.box.com/v/sapien-videos
-- Place the folders `static` and `speaking` under: `start_app/static/video/Metahumans`
-- Create `keys.py` from `keys_template (rename to keys.py).py` and add your own API keys for Microsoft Speech SDK, Azure OpenAI, and SERP (Not required; for enabling google search).
-- Rename `start_app/files/local_mode_dummy.json` to `start_app/files/local_mode.json`.
-- In "start_app/app.py", inside the "admin_required" function, put the email address you would be using to sign in.
-  
+### 2. API keys 설정
 
+`start_app/dialogue_manager/keys.py`를 생성하고 API 키를 설정:
+
+```python
+import os
+os.environ["GOOGLE_API_KEY"] = "your-gemini-api-key"
+os.environ["ELEVENLABS_API_KEY"] = "your-elevenlabs-api-key"
+os.environ["ELEVENLABS_VOICE_ID"] = "your-voice-id"
 ```
+
+### 3. Google OAuth 설정
+
+- [Google Cloud Console](https://console.cloud.google.com/apis/credentials)에서 OAuth 2.0 Client ID 생성
+- 다운로드한 JSON을 `start_app/client_secret.json`으로 저장
+- 승인된 리디렉션 URI에 `http://localhost:5001/callback` 추가
+
+### 4. 설정 파일
+
+```bash
+cp start_app/files/local_mode_dummy.json start_app/files/local_mode.json
+```
+
+### 5. 아바타 비디오
+
+- Download: https://rochester.box.com/v/sapien-videos
+- Place `static` and `speaking` folders under: `start_app/static/video/Metahumans`
+
+### 6. 실행
+
+```bash
 cd start_app
-python app.py
+TOKENIZERS_PARALLELISM=false python app.py
 ```
-- Goto 0.0.0.0:80, and sign-in. Voila!
 
+`http://localhost:5001`에서 Google 로그인 후 사용.
 
-Other useful tips:
+### 7. 테스트
+
+```bash
+cd start_app
+python -m pytest tests/ -v -m "not api"
+```
+
+### Tips
 - Install `ffmpeg` and add it to Path.
-    - [Windows] Add `start_app/files/ffmpeg/bin` to path.
-- If you get errors to initiate sessions, after you sign in, go to "localhost/init_server" and click "Initialize Server". Run again.
+- macOS에서 포트 5000은 AirPlay가 점유하므로 5001 사용.
+- `TOKENIZERS_PARALLELISM=false`는 sentence-transformers mutex deadlock 방지에 필수.
 
 
 ## Contributors:
