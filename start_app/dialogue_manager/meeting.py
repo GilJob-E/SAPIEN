@@ -433,17 +433,17 @@ class Meeting:
         flattened_latex = ["$$"+item+"$$" for sublist in latex for item in sublist if item]
         return string_without_latex, flattened_latex
 
-    def respond(self, speaker_statement, is_emo=True, api="chat"):
+    def respond(self, speaker_statement, is_emo=True, api="chat", user_emotion=None):
         if not speaker_statement:
             speaker_statement = "..."
-        
+
         if speaker_statement != "..." and self.first_response:
             speaker_statement += " 🙂"
             self.first_response = False
 
         if len(self.history)% self.min_history_to_remember == 0 and len(self.history) > self.min_history_to_remember:
             self.summarize_history()
-        
+
         # Curent time passed in minutes
         time_passed = (time.time() - self.start_time)/60
         warning_text = ""
@@ -452,6 +452,14 @@ class Meeting:
             self.time_warning_done = True
             warning_text = "\n[It's almost been {} minutes. Time to wrap up the conversation.]\n".format(self.max_time_minutes)
             print("Time warning text triggered")
+
+        if user_emotion and isinstance(user_emotion, dict):
+            emotion_note = (
+                f"\n[사용자 상태: 자신감={user_emotion.get('confidence','unknown')}, "
+                f"참여도={user_emotion.get('engagement','unknown')}, "
+                f"관찰={user_emotion.get('note','')}]\n"
+            )
+            self.prompt += emotion_note
 
         self.prompt += self.user.firstname+": " + speaker_statement + "\n" + warning_text + self.bot.firstname+":"
         
