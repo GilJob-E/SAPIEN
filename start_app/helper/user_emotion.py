@@ -6,9 +6,24 @@ _client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
 MODEL = "gemini-2.5-flash"
 
 _DEFAULT_EMOTION = {"confidence": "medium", "engagement": "medium", "note": ""}
+_VALID_LEVELS = {"high", "medium", "low"}
+_MAX_FRAME_BASE64_LEN = 1_000_000  # ~750KB decoded JPEG
+
+def _sanitize_emotion(result):
+    """Gemini 응답을 허용된 값으로 제한."""
+    confidence = result.get("confidence", "medium")
+    engagement = result.get("engagement", "medium")
+    note = result.get("note", "")
+    return {
+        "confidence": confidence if confidence in _VALID_LEVELS else "medium",
+        "engagement": engagement if engagement in _VALID_LEVELS else "medium",
+        "note": str(note)[:80].replace("\n", " "),
+    }
 
 def get_emotion(frame_base64):
     """웹캠 프레임(base64 JPEG)에서 감정 분석. 실패 시 기본값 반환."""
+    if not frame_base64 or len(frame_base64) > _MAX_FRAME_BASE64_LEN:
+        return dict(_DEFAULT_EMOTION)
     try:
         response = _client.models.generate_content(
             model=MODEL,
@@ -31,7 +46,7 @@ def get_emotion(frame_base64):
         result = json.loads(response.text)
         if not isinstance(result, dict):
             return dict(_DEFAULT_EMOTION)
-        return result
+        return _sanitize_emotion(result)
     except Exception as e:
         print(f"[Emotion] Gemini Vision 실패: {e}")
         return dict(_DEFAULT_EMOTION)

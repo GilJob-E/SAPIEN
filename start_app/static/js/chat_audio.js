@@ -192,7 +192,7 @@ async function playAudio() {
 function captureFrame() {
   try {
     const video = document.getElementById('cameraElement');
-    if (!video || !video.srcObject || video.videoWidth === 0) return null;
+    if (!video || !video.srcObject || video.videoWidth === 0 || video.videoHeight === 0) return null;
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;

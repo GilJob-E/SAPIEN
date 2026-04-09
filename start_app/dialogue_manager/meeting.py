@@ -453,15 +453,15 @@ class Meeting:
             warning_text = "\n[It's almost been {} minutes. Time to wrap up the conversation.]\n".format(self.max_time_minutes)
             print("Time warning text triggered")
 
+        emotion_note = ""
         if user_emotion and isinstance(user_emotion, dict):
             emotion_note = (
-                f"\n[사용자 상태: 자신감={user_emotion.get('confidence','unknown')}, "
-                f"참여도={user_emotion.get('engagement','unknown')}, "
-                f"관찰={user_emotion.get('note','')}]\n"
+                f"\n[User state: confidence={user_emotion.get('confidence','unknown')}, "
+                f"engagement={user_emotion.get('engagement','unknown')}, "
+                f"observation={user_emotion.get('note','')}]\n"
             )
-            self.prompt += emotion_note
 
-        self.prompt += self.user.firstname+": " + speaker_statement + "\n" + warning_text + self.bot.firstname+":"
+        self.prompt += emotion_note + self.user.firstname+": " + speaker_statement + "\n" + warning_text + self.bot.firstname+":"
         
         speaker_statement, _ =  self.separate_emotion(speaker_statement)
         self.history += [self.user.firstname+": " + speaker_statement]
