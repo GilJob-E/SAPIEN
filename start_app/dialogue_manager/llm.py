@@ -26,7 +26,7 @@ from google.genai import types
 
 
 _client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
-MODEL = "gemini-3-flash-preview"
+MODEL = "gemini-2.0-flash"
 
 
 class LLM:

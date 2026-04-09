@@ -368,7 +368,7 @@ class Meeting:
         bot_response = ""
         num_max_tries = 3
         apis = ["chat", "davinci-002"]  # define the sequence of APIs
-        max_tokens = int(150 * languages["en-US"]["char/token"]/languages[self.language]["char/token"])
+        max_tokens = int(200 * languages["en-US"]["char/token"]/languages[self.language]["char/token"])
         
         if db_prompt:
             init_message = self.chat_system_messages + [{"role": "system", "content": db_prompt}, {"role": "user", "content": self.prompt}]

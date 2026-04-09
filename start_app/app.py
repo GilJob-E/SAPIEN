@@ -698,7 +698,7 @@ def chat():
         return redirect(url_for('index'))
     
     if prerendered or active_meetings[session["meeting_id"]].instance is None:
-        iframe_port = ""
+        iframe_port = os.environ.get("PORT", "5001")
     else:
         iframe_port = active_meetings[session["meeting_id"]].instance.iframe_port
 
@@ -1037,14 +1037,28 @@ def update_user():
 @app.route("/upload_audio", methods=['POST'])
 def upload_audio():
     global active_meetings   
-    print("Audio upload received...")
+    import logging
+    logger = logging.getLogger("upload")
+    logger.setLevel(logging.DEBUG)
+    if not logger.handlers:
+        fh = logging.FileHandler("/tmp/sapien_upload.log")
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
+
+    logger.debug("Audio upload received")
     if 'audio_data' not in request.files:
-        print('No file part')
+        logger.debug("No file part")
         return 'No file part', 400
     audio_file = request.files["audio_data"]
 
     end_conversation = False
-    file_path = active_meetings[session["meeting_id"]].user_speech_dir
+    try:
+        meeting_id = session.get("meeting_id")
+        logger.debug(f"meeting_id: {meeting_id}, active_keys: {list(active_meetings.keys())}")
+        file_path = active_meetings[meeting_id].user_speech_dir
+    except (KeyError, TypeError) as e:
+        logger.error(f"Meeting lookup failed: {e}")
+        return "Meeting not found.", 400
 
     try:
         bot_path = Path(active_meetings[session["meeting_id"]].audiodir)
