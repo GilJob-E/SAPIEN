@@ -26,7 +26,6 @@ from helper.user_emotion import *
 from helper.utils import *
 import argparse
 import base64
-import cv2
 import os, shutil
 import json
 import random
@@ -691,26 +690,6 @@ def chat():
     if not is_permitted(request.referrer):
         return redirect(url_for('index'))
     
-    # if request.method == 'POST':
-    #     if 'imageData' in request.json:
-    #         if request.json['isRecording']:
-    #             imageData = request.json['imageData'].split(',')[1]
-    #             decoded_bytes = base64.b64decode(imageData)
-    #             nparr = np.frombuffer(decoded_bytes, np.uint8)
-    #             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    #             curr_emotion = get_emotion(img)
-    #             # print(f"Current emotion: {curr_emotion}")
-    #             try:
-    #                 session['emotion_list'].append(curr_emotion)
-    #             except KeyError:
-    #                 session['emotion_list'] = []
-    #                 session['emotion_list'].append(curr_emotion)
-    #         else:
-    #             # There is a bug where this code ends twice, clearing the emotion list. Will fix later.
-    #             print("Recording stopped")
-    #             print(session['emotion_list'])
-    #             session['emotion_list'] = []
-
     iframe_port = active_meetings[session["meeting_id"]].instance.iframe_port
 
     session['have_feedback'] = False
@@ -1081,7 +1060,12 @@ def upload_audio():
             msg = "..."
         print("[{}] {}: {}".format(time.time(), meeting.user.firstname, msg))
 
-        response, emo = meeting.respond(msg, True)
+        frame_data = request.form.get('frame_data', None)
+        user_emotion = None
+        if frame_data:
+            user_emotion = get_emotion(frame_data)
+
+        response, emo = meeting.respond(msg, True, user_emotion=user_emotion)
 
         if "[Ending meeting]" in response:
             response = response.replace("[Ending meeting]", "")

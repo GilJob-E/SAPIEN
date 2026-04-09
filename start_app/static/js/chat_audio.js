@@ -189,10 +189,30 @@ async function playAudio() {
   }
 }
 
+function captureFrame() {
+  try {
+    const video = document.getElementById('cameraElement');
+    if (!video || !video.srcObject || video.videoWidth === 0 || video.videoHeight === 0) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+  } catch (e) {
+    console.warn('[Emotion] Frame capture failed:', e);
+    return null;
+  }
+}
+
 async function uploadAudio() {
   const audioBlob = new Blob(recordedChunks, { type: "audio/webm" });
   const formData = new FormData();
   formData.append("audio_data", audioBlob);
+
+  const frame = captureFrame();
+  if (frame) {
+    formData.append("frame_data", frame);
+  }
 
   console.log("Uploading audio...");
 

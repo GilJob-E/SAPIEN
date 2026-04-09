@@ -1,45 +1,52 @@
-# Code authors: Masum Hasan, Cengiz Ozel, Sammy Potter
-# ROC-HCI Lab, University of Rochester
-# Copyright (c) 2023 University of Rochester
+from google import genai
+from google.genai import types
+import os, json, base64
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+_client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+MODEL = "gemini-2.5-flash"
 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
-# THE SOFTWARE.
+_DEFAULT_EMOTION = {"confidence": "medium", "engagement": "medium", "note": ""}
+_VALID_LEVELS = {"high", "medium", "low"}
+_MAX_FRAME_BASE64_LEN = 1_000_000  # ~750KB decoded JPEG
 
+def _sanitize_emotion(result):
+    """Gemini 응답을 허용된 값으로 제한."""
+    confidence = result.get("confidence", "medium")
+    engagement = result.get("engagement", "medium")
+    note = result.get("note", "")
+    return {
+        "confidence": confidence if confidence in _VALID_LEVELS else "medium",
+        "engagement": engagement if engagement in _VALID_LEVELS else "medium",
+        "note": str(note)[:80].replace("\n", " "),
+    }
 
-from deepface import DeepFace
-
-# map all emotions to emojis
-emotion_enum = {
-    'angry': '😠',
-    'disgust': '🤢',
-    'fear': '😨',
-    'happy': '😄',
-    'sad': '😢',
-    'surprise': '😮',
-    'neutral': '😐'
-}
-
-# Returns the dominant emotion
-def get_emotion(img):
-    emotions = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
-    result = DeepFace.analyze(img, actions = ['emotion'], enforce_detection = False)
-
-    # print all emotions
-    # for emotion in emotions:
-    #     print(f"{emotion}: {result[0]['emotion'][emotion]}%")
-
-    if result[0]['dominant_emotion'] in emotions:
-        # print(f"Dominant emotion: {result[0]['dominant_emotion']} - {result[0]['emotion'][result[0]['dominant_emotion']]}%")
-        return emotion_enum[result[0]['dominant_emotion']]
+def get_emotion(frame_base64):
+    """웹캠 프레임(base64 JPEG)에서 감정 분석. 실패 시 기본값 반환."""
+    if not frame_base64 or len(frame_base64) > _MAX_FRAME_BASE64_LEN:
+        return dict(_DEFAULT_EMOTION)
+    try:
+        response = _client.models.generate_content(
+            model=MODEL,
+            contents=[
+                types.Part.from_bytes(
+                    data=base64.b64decode(frame_base64),
+                    mime_type="image/jpeg",
+                ),
+                "이 사람의 표정을 분석하세요. JSON으로만 응답: "
+                '{"confidence": "high|medium|low", '
+                '"engagement": "high|medium|low", '
+                '"note": "간단한 관찰"}',
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                max_output_tokens=100,
+                temperature=0.3,
+            ),
+        )
+        result = json.loads(response.text)
+        if not isinstance(result, dict):
+            return dict(_DEFAULT_EMOTION)
+        return _sanitize_emotion(result)
+    except Exception as e:
+        print(f"[Emotion] Gemini Vision 실패: {e}")
+        return dict(_DEFAULT_EMOTION)

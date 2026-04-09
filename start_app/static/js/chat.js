@@ -242,9 +242,6 @@ window.addEventListener('message', async event => {
       hangupButton.style.visibility = 'visible';
       pElement.style.visibility = 'visible';
 
-      
-      sendFramesToFlask();
-
       // Adding name
       const nameElement = document.getElementById('botName');
       nameElement.innerHTML = mhName + " " + mhNameLast;
@@ -384,48 +381,6 @@ function loadOptions(active = -1) {
 
     dropdownContent.appendChild(newOption);
   });
-}
-
-let isRecording = false;
-function sendFramesToFlask() {
-    console.log('sendFramesToFlask');
-    isRecording = !isRecording;
-
-    const video = document.getElementById('cameraElement');
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-
-    function sendFrame() {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = canvas.toDataURL('image/jpeg', 0.5);
-        // encodedImage = encodeURIComponent(imageData);
-        const data = { "imageData": imageData, "isRecording": isRecording };
-        const jsonData = JSON.stringify(data);
-
-        // display image
-        // const img = document.createElement('img');
-        // img.src = imageData;
-        // document.body.appendChild(img);
-
-        const xhr = new XMLHttpRequest();
-        var method = "POST";
-        var url = "/chat";
-        xhr.open(method, url, true);
-
-        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-        xhr.send(jsonData);
-
-        const fps = 1; // fps to send camera frames to get emotion
-        if (isRecording) {
-            setTimeout(sendFrame, 1000 / fps);
-        }
-    }
-
-    console.log('isRecording:', isRecording);
-    console.log('sendFrame');
-    sendFrame()
 }
 
 function menuAction(option, index) {
