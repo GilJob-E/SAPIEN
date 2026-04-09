@@ -39,7 +39,7 @@ def get_emotion(frame_base64):
             ],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                max_output_tokens=100,
+                max_output_tokens=1024,
                 temperature=0.3,
             ),
         )
