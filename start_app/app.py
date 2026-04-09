@@ -19,6 +19,9 @@
 # THE SOFTWARE.
 
 
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 from dialogue_manager.globals import *
 from dialogue_manager.usecases import *
 from helper.database import init_db
@@ -26,6 +29,7 @@ from helper.user_emotion import *
 from helper.utils import *
 import argparse
 import base64
+import requests
 import os, shutil
 import json
 import random
@@ -77,15 +81,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 DB_Instances, Waitlist = init_db(db)
 
-socketio = SocketIO(app, cors_allowed_origins=os.environ.get('CORS_ORIGINS', 'http://localhost:*').split(','))
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1" # to allow Http traffic for local dev
 
-GOOGLE_CLIENT_ID = "1079800327919-5a5l0ip6t97d0f08544veusc1anib1qu.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "1018608922006-3nb4hqpqjo6cpv47m0ldfbbj11a47pop.apps.googleusercontent.com"
 client_secrets_file = root_path / 'client_secret.json'
 
 if local:
-    redirect_uri="http://localhost/callback"
+    redirect_uri=f"http://localhost:{os.environ.get('PORT', 5001)}/callback"
 else:
     redirect_uri="https://sapien.coach/callback"
 
@@ -322,7 +326,7 @@ def initialize_server():
 
 @app.route('/poll')
 def poll():
-    global active_meetings
+    global active_meetings, prerendered
     print("="*25)
     meeting_id = session.get("meeting_id")
 
@@ -330,6 +334,10 @@ def poll():
     print("all active meetings:", active_meetings)
 
     meeting = active_meetings[meeting_id]
+
+    if prerendered:
+        meeting.set_audio()
+        return jsonify({"status": "ready"})
 
     try:
         print(f"meeting.added_to_waitlist: {meeting.added_to_waitlist}")
@@ -690,7 +698,10 @@ def chat():
     if not is_permitted(request.referrer):
         return redirect(url_for('index'))
     
-    iframe_port = active_meetings[session["meeting_id"]].instance.iframe_port
+    if prerendered or active_meetings[session["meeting_id"]].instance is None:
+        iframe_port = ""
+    else:
+        iframe_port = active_meetings[session["meeting_id"]].instance.iframe_port
 
     session['have_feedback'] = False
     return render_template('chat.html', iframe_url=iframe_url + str(iframe_port), user_name=session["name"], user_image=session["user_image"], prerendered=prerendered)
@@ -1213,7 +1224,7 @@ if not local:
 app.logger.debug(f"entering main, set working dir to {os.getcwd()}")
 
 if __name__ == '__main__':
-    port = 80
+    port = int(os.environ.get("PORT", 5001))
     # global prerendered
     try:
         # parser = argparse.ArgumentParser()
@@ -1221,7 +1232,7 @@ if __name__ == '__main__':
         # args = parser.parse_args()
         # prerendered = args.prerendered
 
-        prerendered = False
+        prerendered = True
 
         print("Light mode: ", prerendered)
 

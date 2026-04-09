@@ -134,7 +134,8 @@ def post_job_interview(session, request):
     print("Bot name: ", bot_fname, bot_lname, bot_pronoun)
     bot = Bot(bot_fname, bot_lname, bot_pronoun)
    
-    meeting = Interview(user, bot)
+    language = session.get('language', 'ko-KR')
+    meeting = Interview(user, bot, language=language)
     meeting.resume = resume
     meeting.job_posting = job_posting
     meeting.job_position = job_position
