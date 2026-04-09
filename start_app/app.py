@@ -20,7 +20,6 @@
 
 
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from dialogue_manager.globals import *
 from dialogue_manager.usecases import *
@@ -1065,17 +1064,24 @@ def upload_audio():
         convert_webm_to_wav(webm_dir, wav_dir)
         os.remove(webm_dir)
 
-        msg = meeting.speech2text.recognize_from_file(wav_dir, meeting.language)
+        from concurrent.futures import ThreadPoolExecutor
 
+        frame_data = request.form.get('frame_data', None)
+        t_start = time.time()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            stt_future = executor.submit(meeting.speech2text.recognize_from_file, wav_dir, meeting.language)
+            emo_future = executor.submit(get_emotion, frame_data) if frame_data else None
+
+            msg = stt_future.result()
+            user_emotion = emo_future.result() if emo_future else None
+
+        t_stt = time.time()
         if not msg.strip():
             msg = "..."
         print("[{}] {}: {}".format(time.time(), meeting.user.firstname, msg))
 
-        frame_data = request.form.get('frame_data', None)
-        user_emotion = None
-        if frame_data:
-            user_emotion = get_emotion(frame_data)
-
+        t_llm_start = time.time()
         response, emo = meeting.respond(msg, True, user_emotion=user_emotion)
 
         if "[Ending meeting]" in response:
@@ -1083,8 +1089,11 @@ def upload_audio():
             end_conversation = True
             print("End Conversation Triggered...")
 
+        t_llm_end = time.time()
         meeting.text2speech.create_wav(response, emo)
-        # meeting.text2speech.create_wav_11(response)
+        t_tts_end = time.time()
+
+        print(f"[Latency] STT+Emotion={t_stt - t_start:.2f}s LLM={t_llm_end - t_llm_start:.2f}s TTS={t_tts_end - t_llm_end:.2f}s Total={t_tts_end - t_start:.2f}s")
     except Exception as e:
         print(f"UPLOAD Error: {e}")
         traceback.print_exc()

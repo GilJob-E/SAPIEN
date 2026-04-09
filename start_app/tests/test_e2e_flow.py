@@ -49,10 +49,16 @@ class TestSmoke:
         from elevenlabs import ElevenLabs
         assert ElevenLabs is not None
 
-    def test_whisper_importable(self):
-        """whisper 패키지가 설치되어 있는지 확인."""
-        import whisper
-        assert hasattr(whisper, "load_model")
+    def test_no_whisper_dependency(self):
+        """whisper 의존성이 제거되었는지 확인 (Gemini STT로 교체됨)."""
+        import subprocess
+        result = subprocess.run(
+            ["grep", "-r", "import whisper", "start_app/",
+             "--include=*.py", "--exclude-dir=tests", "-l"],
+            capture_output=True, text=True,
+            cwd=os.path.join(os.path.dirname(__file__), "../.."),
+        )
+        assert result.stdout.strip() == "", f"whisper import 발견: {result.stdout}"
 
 
 class TestErrorFallback:
@@ -62,29 +68,21 @@ class TestErrorFallback:
         result = get_emotion(None)
         assert result == _DEFAULT_EMOTION
 
-    def test_empty_audio_returns_ellipsis(self):
-        """빈 오디오 → STT가 '...' 반환 (앱이 크래시하지 않음)."""
-        # Speech2Text 직접 import하면 whisper 모델 로드됨 → mock 사용
-        from unittest.mock import MagicMock, patch
-        import sys
-        sys.modules["whisper"] = MagicMock()
-        sys.modules["torch"] = MagicMock()
-        sys.modules["torch"].cuda = MagicMock()
-        sys.modules["torch"].cuda.is_available = MagicMock(return_value=False)
-
-        # whisper 모델 mock
-        mock_model = MagicMock()
-        mock_model.transcribe.return_value = {"text": ""}
-        sys.modules["whisper"].load_model.return_value = mock_model
-
-        # 강제 re-import
+    def test_stt_api_failure_returns_ellipsis(self):
+        """STT API 실패 → '...' 반환, 크래시 없음."""
+        from unittest.mock import patch, MagicMock
+        # meeting 테스트가 모듈을 mock으로 교체하므로 직접 재로드
+        import importlib, sys
         if "dialogue_manager.speech2text" in sys.modules:
             del sys.modules["dialogue_manager.speech2text"]
+        import dialogue_manager.speech2text as stt_mod
+        importlib.reload(stt_mod)
 
-        from dialogue_manager.speech2text import Speech2Text
-        stt = Speech2Text()
-        result = stt.recognize_from_file("nonexistent.wav", "ko-KR")
-        assert result == "..."
+        with patch.object(stt_mod, "_client") as mock_client:
+            mock_client.models.generate_content.side_effect = Exception("API error")
+            stt = stt_mod.Speech2Text()
+            result = stt.recognize_from_file("nonexistent.wav", "ko-KR")
+            assert result == "..."
 
     def test_gemini_api_timeout_no_crash(self):
         """Gemini API 타임아웃 → 기본값 반환, 크래시 없음."""
