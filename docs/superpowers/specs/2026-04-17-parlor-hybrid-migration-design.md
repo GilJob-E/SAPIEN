@@ -113,7 +113,15 @@ giljob-e/SAPIEN/
 │   │   └── speech2text.py,
 │   │       text2speech.py            # Retained for Legacy fallback
 │   ├── templates/chat.html           # WS client hook
-│   ├── static/js/chat.js             # Feature flag dispatch
+│   ├── static/
+│   │   └── js/
+│   │       ├── chat.js               # Feature flag dispatch (modified)
+│   │       └── realtime/             # 🆕 Browser realtime modules
+│   │           ├── vad-worker.js     # Silero VAD WASM wrapper
+│   │           ├── audio-capture.js  # AudioWorklet 16 kHz PCM
+│   │           ├── frame-capture.js  # video → canvas → JPEG
+│   │           ├── ws-client.js      # FastAPI WS connect/reconnect
+│   │           └── audio-player.js   # Web Audio gapless playback
 │   └── tests/                        # All 34 tests preserved
 │
 ├── start_app_ws/                     # 🆕 FastAPI multimodal server
@@ -127,13 +135,6 @@ giljob-e/SAPIEN/
 │   └── tests/
 │       ├── unit/
 │       └── integration/
-│
-├── static/js/realtime/               # 🆕 Browser realtime modules
-│   ├── vad-worker.js                 # Silero VAD WASM wrapper
-│   ├── audio-capture.js              # AudioWorklet 16 kHz PCM
-│   ├── frame-capture.js              # video → canvas → JPEG
-│   ├── ws-client.js                  # FastAPI WS connect/reconnect
-│   └── audio-player.js               # Web Audio gapless playback
 │
 ├── models/                           # 🆕 gitignored
 │   └── gemma-4-e2b/                  # LiteRT-LM model files
@@ -240,7 +241,7 @@ Time(s)  Browser                        FastAPI :8000                   Gemma 4 
          ← WS {type:"turn_end"}
 ```
 
-**Note:** M2 first-token time is an estimate. Gate #3 validates the actual value on target hardware.
+**Note:** First-token time on M2 MacBook hardware is an estimate. Gate #3 (Section 8.1) validates the actual value on target hardware.
 
 ### 5.2 WebSocket protocol
 
@@ -309,8 +310,8 @@ Capture one JPEG at the moment of utterance end. Rationale: final facial express
 ### 5.6 Dialog history management
 
 - FastAPI in-memory `dict[session_id, list[Turn]]`, where `Turn = {role, text, emotion?, timestamp}`
-- On WS close: POST `/internal/meeting/{sid}/flush` (Flask persists to DB)
-- On WS reconnect: GET `/internal/meeting/{sid}/history` (Flask returns turns)
+- On WS close: POST `/internal/meeting/{session_id}/flush` (Flask persists to DB)
+- On WS reconnect: GET `/internal/meeting/{session_id}/history` (Flask returns turns)
 - Long-session memory: after 8 turns, oldest turns summarized into a single `system` turn
 
 ---
@@ -614,7 +615,7 @@ def client_config():
 ```
 
 ```javascript
-// static/js/chat.js (small addition)
+// start_app/static/js/chat.js (small addition)
 const config = await fetch("/config").then(r => r.json());
 if (config.fastapi_ws_enabled && !sessionStorage.getItem("use_legacy")) {
   initRealtimeMode(config.fastapi_ws_url);
@@ -689,8 +690,8 @@ Existing issues #2 and #6 (currently OPEN but implementation-complete) are close
 
 ```
 docs/superpowers/specs/2026-04-17-parlor-hybrid-migration-design.md    (this file)
-start_app_ws/                                                          (new package, ~8 files)
-static/js/realtime/                                                    (new JS modules, 5 files)
+start_app_ws/                                                          (new package, 8 files + tests/)
+start_app/static/js/realtime/                                          (new JS modules, 5 files)
 scripts/smoke_gemma_korean.py
 scripts/smoke_gemma_multimodal.py
 scripts/bench_latency.py
