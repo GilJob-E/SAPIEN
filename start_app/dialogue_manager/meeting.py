@@ -172,6 +172,7 @@ class Meeting:
         self.initial_system_messages = [
             {"role": "system", "content": "Don't say that you are an AI Language Model."},
             {"role": "system", "content": "Don't let the other speaker talk off topic."},
+            {"role": "system", "content": "Keep your responses concise: 2-3 sentences maximum per turn. This is a real-time conversation, not an essay."},
             {"role": "system", "content": "This conversation is happening over a video call. If you would like to end a conversation, say the word <|endmeeting|> at the end of your sentence."},
             {"role": "system", "content": f"To express {self.bot.firstname}'s emotions, use at most one emoji (e.g. 6 basic emotions: 😊, 😢, 😡, 😮, 🤢, 😨, etc.) at the end of your response. Do not use emoji that doesn't represent an emotion."}
         ]
@@ -341,7 +342,7 @@ class Meeting:
             response = response.lower().replace("am an ai language model", "am a SAPIEN Digital Human")
         # response = response.strip().replace("\n", " ") ## Removed to handle code
         response = response.replace("Masum", "Masoom")
-        if response[-1] not in [".", "?", "!"]:
+        if self.language == "en-US" and response[-1] not in [".", "?", "!"]:
             sentences = sent_tokenize(response)
             response = " ".join(sentences[:-1])
         return response
@@ -368,7 +369,7 @@ class Meeting:
         bot_response = ""
         num_max_tries = 3
         apis = ["chat", "davinci-002"]  # define the sequence of APIs
-        max_tokens = int(200 * languages["en-US"]["char/token"]/languages[self.language]["char/token"])
+        max_tokens = 500
         
         if db_prompt:
             init_message = self.chat_system_messages + [{"role": "system", "content": db_prompt}, {"role": "user", "content": self.prompt}]
