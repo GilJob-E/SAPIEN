@@ -38,3 +38,8 @@ start_app/files/db/instances.sqlite3
 start_app/files/db/meeting.sqlite3
 start_app/files/db/waitlist.sqlite3
 nodejs_page
+
+# Local ML models (Parlor-hybrid migration)
+models/
+.venv-smoke/
+scripts/_results/

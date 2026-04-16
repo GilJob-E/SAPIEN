@@ -1,0 +1,10 @@
+# Smoke test dependencies (M0 gate scripts only)
+# DO NOT install these into production environment — they are isolated per design spec §4.2
+litert-lm>=0.4.0
+numpy>=1.26
+Pillow>=10.0
+pytest>=8.0
+pytest-timeout>=2.3
+jiwer>=3.0
+google-generativeai>=0.8
+rich>=13.0
