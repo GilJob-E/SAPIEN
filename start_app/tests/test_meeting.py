@@ -16,14 +16,6 @@ from pathlib import Path
 # ── 무거운 모듈들을 전부 mock 처리 (모듈 로드 전) ─────────────────
 def _setup_mocks():
     """meeting.py import 전에 모든 무거운 의존성을 mock."""
-    # whisper / torch
-    mock_whisper = MagicMock()
-    mock_whisper.load_model.return_value = MagicMock()
-    sys.modules["whisper"] = mock_whisper
-    mock_torch = MagicMock()
-    mock_torch.cuda.is_available.return_value = False
-    sys.modules["torch"] = mock_torch
-
     # elevenlabs
     mock_elevenlabs = MagicMock()
     sys.modules["elevenlabs"] = mock_elevenlabs

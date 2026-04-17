@@ -1,0 +1,23 @@
+{
+  "probe": "multimodal_latency",
+  "model": "gemma-4-E2B-it.litertlm",
+  "backend": "CPU",
+  "audio_backend": "CPU",
+  "vision_backend": "CPU",
+  "audio_duration_s": 5.0,
+  "image_size_kb": 4,
+  "load_s": 2.23,
+  "warmup_s": 5.4,
+  "steady_state": {
+    "mean_s": 3.79,
+    "p50_s": 3.75,
+    "p95_s": 3.86,
+    "raw_s": [
+      3.9,
+      3.75,
+      3.86,
+      3.71,
+      3.72
+    ]
+  }
+}

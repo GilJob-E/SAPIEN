@@ -1,0 +1,36 @@
+{
+  "description": "Ground truth for Gate #2 emotion-inference check. Audio is TTS-synthesised (ElevenLabs Alice, eleven_multilingual_v2) from known transcripts so WER is measurable. Photo is a synthetic neutral-tone frame, not a real face — emotion labels therefore reflect the audio tone, not the photo.",
+  "schema_note": "confidence/engagement use the same high/medium/low scale as the production emotion JSON (design spec §4.6). Labels are assigned by the author based on the speaking style the TTS voice produces for each transcript (all neutral register, similar cadence), so all labels default to 'medium'. Gate #2 emotion match criterion is ≥3/5, which is achievable even with some labeler-rater disagreement.",
+  "samples": [
+    {
+      "audio": "self_intro.wav",
+      "expected_confidence": "medium",
+      "expected_engagement": "medium",
+      "expected_transcript": "안녕하세요, 저는 김진우라고 합니다. 컴퓨터공학을 전공하고 있습니다."
+    },
+    {
+      "audio": "motivation.wav",
+      "expected_confidence": "medium",
+      "expected_engagement": "medium",
+      "expected_transcript": "이 포지션에 지원한 이유는 실시간 AI 시스템에 관심이 많기 때문입니다."
+    },
+    {
+      "audio": "experience.wav",
+      "expected_confidence": "medium",
+      "expected_engagement": "medium",
+      "expected_transcript": "최근에 저는 멀티모달 면접 플랫폼을 개발하고 있습니다."
+    },
+    {
+      "audio": "weakness.wav",
+      "expected_confidence": "medium",
+      "expected_engagement": "medium",
+      "expected_transcript": "제 단점은 한 가지 일에 너무 몰입해서 다른 일을 놓치는 경우가 있다는 점입니다."
+    },
+    {
+      "audio": "question.wav",
+      "expected_confidence": "medium",
+      "expected_engagement": "medium",
+      "expected_transcript": "혹시 팀의 엔지니어링 문화에 대해 조금 더 알려주실 수 있을까요?"
+    }
+  ]
+}

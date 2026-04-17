@@ -1,0 +1,57 @@
+{
+  "description": "Gate #1 Korean interview prompts — used to A/B test Gemma 4 E2B vs Gemini 2.0 Flash.",
+  "language": "ko-KR",
+  "register": "formal",
+  "prompts": [
+    {
+      "id": "p01",
+      "category": "self_intro",
+      "text": "안녕하세요. 먼저 간단히 자기소개 부탁드립니다."
+    },
+    {
+      "id": "p02",
+      "category": "motivation",
+      "text": "저희 회사에 지원하신 이유를 말씀해 주세요."
+    },
+    {
+      "id": "p03",
+      "category": "experience",
+      "text": "최근에 진행하신 프로젝트 중 가장 기억에 남는 것과 본인의 역할을 설명해 주세요."
+    },
+    {
+      "id": "p04",
+      "category": "weakness",
+      "text": "본인의 단점과, 그것을 개선하기 위해 어떤 노력을 하고 계신지 말씀해 주세요."
+    },
+    {
+      "id": "p05",
+      "category": "strength",
+      "text": "본인이 가진 가장 큰 강점은 무엇이라고 생각하시나요? 사례와 함께 답변 부탁드립니다."
+    },
+    {
+      "id": "p06",
+      "category": "technical",
+      "text": "실시간 멀티모달 AI 시스템에서 레이턴시를 줄이기 위해 어떤 기술적 선택을 하실 건가요?"
+    },
+    {
+      "id": "p07",
+      "category": "teamwork",
+      "text": "팀원과 의견이 달랐던 경험을 말씀해 주시고, 어떻게 해결하셨는지 알려 주세요."
+    },
+    {
+      "id": "p08",
+      "category": "failure",
+      "text": "크게 실패했던 경험과 그로부터 배운 점을 한 가지만 말씀해 주세요."
+    },
+    {
+      "id": "p09",
+      "category": "growth",
+      "text": "최근 1년간 가장 많이 성장했다고 느끼는 부분은 무엇인가요?"
+    },
+    {
+      "id": "p10",
+      "category": "closing",
+      "text": "마지막으로 저희에게 궁금한 점이 있으시면 편하게 질문해 주세요."
+    }
+  ]
+}

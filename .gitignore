@@ -38,3 +38,18 @@ start_app/files/db/instances.sqlite3
 start_app/files/db/meeting.sqlite3
 start_app/files/db/waitlist.sqlite3
 nodejs_page
+
+# Local ML models (Parlor-hybrid migration)
+models/
+.venv-smoke/
+
+# Ignore result files individually (not the directory) so negations work.
+scripts/_results/*
+
+# Parlor-hybrid M0 smoke-gate artifacts — commit these as evidence
+!scripts/fixtures/audio_samples/*.wav
+!scripts/_results/gate*.json
+!scripts/_results/multimodal_probe.json
+
+# Clang/Swift profiling artifacts
+default.profraw

@@ -1,53 +1,45 @@
-# Code authors: Masum Hasan, Cengiz Ozel, Sammy Potter
-# ROC-HCI Lab, University of Rochester
-# Copyright (c) 2023 University of Rochester
+import os
+from google import genai
+from google.genai import types
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+_client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+MODEL = "gemini-3.1-flash-lite-preview"
 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
-
-
-import whisper
-import torch
-import warnings
-
-warnings.filterwarnings("ignore", message="FP16 is not supported on CPU")
-
-_device = "cuda" if torch.cuda.is_available() else "cpu"
-_model_size = "base" if _device == "cuda" else "base"
-print(f"[STT] Whisper 모델 로드: {_model_size} (device={_device})")
-_whisper_model = whisper.load_model(_model_size, device=_device)
-print("[STT] Whisper 모델 로드 완료")
+_LANG_NAMES = {
+    "ko": "Korean", "en": "English", "ja": "Japanese",
+    "zh": "Chinese", "es": "Spanish", "fr": "French",
+    "de": "German", "pt": "Portuguese", "ru": "Russian",
+    "it": "Italian",
+}
 
 
 class Speech2Text:
     def recognize_from_file(self, filename, language="ko"):
-        print("[STT] Whisper 인식 시작...")
+        print("[STT] Gemini 인식 시작...")
         try:
-            # language 파라미터: "en-US" → "en", "ko-KR" → "ko"
             lang_code = language[:2] if language else "ko"
-            result = _whisper_model.transcribe(
-                str(filename),
-                language=lang_code,
-                fp16=(_device == "cuda"),
+            lang_name = _LANG_NAMES.get(lang_code, "Korean")
+
+            with open(str(filename), "rb") as f:
+                audio_bytes = f.read()
+
+            response = _client.models.generate_content(
+                model=MODEL,
+                contents=[
+                    types.Part.from_bytes(data=audio_bytes, mime_type="audio/wav"),
+                    f"Transcribe this audio in {lang_name}. Output only the transcribed text, nothing else.",
+                ],
+                config=types.GenerateContentConfig(
+                    max_output_tokens=500,
+                    temperature=0.1,
+                ),
             )
-            text = result["text"].strip()
+            text = response.text.strip()
             if not text:
                 print("[STT] 인식 결과 없음")
                 return "..."
             print(f"[STT] 인식: {text}")
             return text
         except Exception as e:
-            print(f"[STT] Whisper 인식 실패: {e}")
+            print(f"[STT] Gemini 인식 실패: {e}")
             return "..."

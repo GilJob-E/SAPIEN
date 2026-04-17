@@ -1,0 +1,70 @@
+{
+  "gate": "2_multimodal",
+  "timestamp": "2026-04-17T10:23:45",
+  "thresholds": {
+    "max_mean_wer": 0.1,
+    "min_emotion_matches": 3
+  },
+  "mean_wer": 0.07714285714285714,
+  "emotion_matches": 0,
+  "wer_pass": true,
+  "emotion_pass": false,
+  "passed": false,
+  "per_sample": [
+    {
+      "audio": "self_intro.wav",
+      "expected_transcript": "안녕하세요, 저는 김진우라고 합니다. 컴퓨터공학을 전공하고 있습니다.",
+      "got_transcript": "안녕하세요, 저는 김진우라고 합니다. 컴퓨터 공학을 전공하고 있습니다.",
+      "wer": 0.2857142857142857,
+      "expected_confidence": "medium",
+      "got_confidence": "high",
+      "expected_engagement": "medium",
+      "got_engagement": "medium",
+      "raw_response": "```json\n{\n  \"transcript\": \"안녕하세요, 저는 김진우라고 합니다. 컴퓨터 공학을 전공하고 있습니다.\",\n  \"confidence\": \"high\",\n  \"engagement\": \"medium\",\n  \"note\": \"자기소개 및 전공에 대한 내용입니다.\"\n}\n```"
+    },
+    {
+      "audio": "motivation.wav",
+      "expected_transcript": "이 포지션에 지원한 이유는 실시간 AI 시스템에 관심이 많기 때문입니다.",
+      "got_transcript": "이 포지션에 지원한 이유는 실시간 AI 시스템에 관심이 많기 때문입니다.",
+      "wer": 0.0,
+      "expected_confidence": "medium",
+      "got_confidence": "high",
+      "expected_engagement": "medium",
+      "got_engagement": "high",
+      "raw_response": "```json\n{\n  \"transcript\": \"이 포지션에 지원한 이유는 실시간 AI 시스템에 관심이 많기 때문입니다.\",\n  \"confidence\": \"high\",\n  \"engagement\": \"high\",\n  \"note\": \"지원 동기로 실시간 AI 시스템에 대한 관심이 언급됨.\"\n}\n```"
+    },
+    {
+      "audio": "experience.wav",
+      "expected_transcript": "최근에 저는 멀티모달 면접 플랫폼을 개발하고 있습니다.",
+      "got_transcript": "최근에 저는 멀티모달 면접 플랫폼을 개발하고 있습니다.",
+      "wer": 0.0,
+      "expected_confidence": "medium",
+      "got_confidence": "high",
+      "expected_engagement": "medium",
+      "got_engagement": "medium",
+      "raw_response": "```json\n{\n  \"transcript\": \"최근에 저는 멀티모달 면접 플랫폼을 개발하고 있습니다.\",\n  \"confidence\": \"high\",\n  \"engagement\": \"medium\",\n  \"note\": \"멀티모달 면접 플랫폼 개발에 대한 내용입니다.\"\n}\n```"
+    },
+    {
+      "audio": "weakness.wav",
+      "expected_transcript": "제 단점은 한 가지 일에 너무 몰입해서 다른 일을 놓치는 경우가 있다는 점입니다.",
+      "got_transcript": "제 단점은 한 가지 일에 너무 몰입해서 다른 일을 놓치는 경우가 있다는 점입니다.",
+      "wer": 0.0,
+      "expected_confidence": "medium",
+      "got_confidence": "high",
+      "expected_engagement": "medium",
+      "got_engagement": "medium",
+      "raw_response": "```json\n{\n  \"transcript\": \"제 단점은 한 가지 일에 너무 몰입해서 다른 일을 놓치는 경우가 있다는 점입니다.\",\n  \"confidence\": \"high\",\n  \"engagement\": \"medium\",\n  \"note\": \"자신의 단점을 솔직하게 인정하는 내용입니다.\"\n}\n```"
+    },
+    {
+      "audio": "question.wav",
+      "expected_transcript": "혹시 팀의 엔지니어링 문화에 대해 조금 더 알려주실 수 있을까요?",
+      "got_transcript": "팀의 엔지니어링 문화에 대해 조금 더 알려주실 수 있을까요?",
+      "wer": 0.1,
+      "expected_confidence": "medium",
+      "got_confidence": "high",
+      "expected_engagement": "medium",
+      "got_engagement": "medium",
+      "raw_response": "```json\n{\n  \"transcript\": \"팀의 엔지니어링 문화에 대해 조금 더 알려주실 수 있을까요?\",\n  \"confidence\": \"high\",\n  \"engagement\": \"medium\",\n  \"note\": \"팀의 엔지니어링 문화에 대한 질문을 하고 있습니다.\"\n}\n```"
+    }
+  ]
+}

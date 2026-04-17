@@ -3,7 +3,7 @@ from google.genai import types
 import os, json, base64
 
 _client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY", ""))
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.1-flash-lite-preview"
 
 _DEFAULT_EMOTION = {"confidence": "medium", "engagement": "medium", "note": ""}
 _VALID_LEVELS = {"high", "medium", "low"}
@@ -39,7 +39,7 @@ def get_emotion(frame_base64):
             ],
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                max_output_tokens=1024,
+                max_output_tokens=200,
                 temperature=0.3,
             ),
         )
