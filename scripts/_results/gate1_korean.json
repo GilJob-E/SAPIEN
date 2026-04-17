@@ -1,0 +1,222 @@
+{
+  "gate": "1_korean_dialogue_quality",
+  "timestamp": "2026-04-17T09:42:26",
+  "thresholds": {
+    "min_mean": 3.5,
+    "min_individual_floor": 2.0
+  },
+  "rater": "claude-controller (automated, to be verified by human operator)",
+  "gemma": {
+    "mean": 4.3,
+    "min": 2,
+    "count": 10
+  },
+  "gemini_baseline": {
+    "mean": 4.8,
+    "min": 3,
+    "count": 10
+  },
+  "passed": false,
+  "per_prompt": [
+    {
+      "id": "p01",
+      "category": "self_intro",
+      "prompt_text": "안녕하세요. 먼저 간단히 자기소개 부탁드립니다.",
+      "gemma_response": "안녕하십니까. 저는 [본인의 핵심 역량이나 경험]을 바탕으로 귀사에 기여할 준비가 된 지원자입니다. 앞으로 면접을 통해 저의 역량과 열정을 더 자세히 말씀드리겠습니다.",
+      "gemma_latency_s": 3.25,
+      "gemma_rating": {
+        "fluency": 4,
+        "relevance": 3,
+        "register": 5
+      },
+      "gemini_response": "네, 안녕하세요. 먼저 지원자분께서 간단히 자기소개 부탁드립니다. 편하게 말씀해주시면 됩니다.",
+      "gemini_latency_s": 1.65,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p02",
+      "category": "motivation",
+      "prompt_text": "저희 회사에 지원하신 이유를 말씀해 주세요.",
+      "gemma_response": "저희 회사의 비전과 제가 가진 역량이 시너지를 낼 수 있다고 생각하여 지원하게 되었습니다. 특히 귀사의 [특정 분야/가치]에 깊이 공감하며, 제가 가진 [핵심 역량]을 통해 회사에 실질적인 기여를 하고 싶습니다.",
+      "gemma_latency_s": 2.38,
+      "gemma_rating": {
+        "fluency": 3,
+        "relevance": 3,
+        "register": 5
+      },
+      "gemini_response": "네, 저희 회사에 지원해 주신 동기가 궁금합니다. 어떤 비전과 목표를 가지고 지원하셨는지 구체적으로 말씀해주시겠습니까?",
+      "gemini_latency_s": 3.76,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p03",
+      "category": "experience",
+      "prompt_text": "최근에 진행하신 프로젝트 중 가장 기억에 남는 것과 본인의 역할을 설명해 주세요.",
+      "gemma_response": "네, 가장 기억에 남는 프로젝트는 [프로젝트 이름]이며, 저는 [본인의 역할]을 통해 [구체적인 성과나 기여]를 달성하는 데 핵심적인 역할을 수행했습니다. 이 경험을 통해 [배운 점]을 얻을 수 있었습니다.",
+      "gemma_latency_s": 2.13,
+      "gemma_rating": {
+        "fluency": 3,
+        "relevance": 2,
+        "register": 5
+      },
+      "gemini_response": "저는 인공지능이므로 특정 프로젝트를 직접 수행하지는 않습니다만, 저를 개발하고 고도화하는 과정 자체가 가장 기억에 남는 '프로젝트'라고 할 수 있습니다. 이 과정에서 저는 방대한 데이터를 학습하며 사용자분들께 더욱 정확하고 유용한 정보를 제공하는 역할을 수행합니다.",
+      "gemini_latency_s": 3.94,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 4,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p04",
+      "category": "weakness",
+      "prompt_text": "본인의 단점과, 그것을 개선하기 위해 어떤 노력을 하고 계신지 말씀해 주세요.",
+      "gemma_response": "면접관: 본인의 단점과, 그것을 개선하기 위해 어떤 노력을 하고 계신지 말씀해 주세요.\n\n**면접관 답변:** 제가 때로는 너무 완벽을 추구하여 업무 속도가 더뎌지는 경향이 있습니다. 이를 개선하기 위해 우선순위를 명확히 설정하고, '충분히 좋은 결과'를 내는 것에 집중하며 효율적인 시간 관리를 훈련하고 있습니다.",
+      "gemma_latency_s": 3.13,
+      "gemma_rating": {
+        "fluency": 2,
+        "relevance": 3,
+        "register": 4
+      },
+      "gemini_response": "네, 지원자님의 단점과 그것을 개선하기 위해 어떤 노력을 하고 계신지 듣고 싶습니다. 편하게 말씀해 주시면 감사하겠습니다.",
+      "gemini_latency_s": 5.98,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p05",
+      "category": "strength",
+      "prompt_text": "본인이 가진 가장 큰 강점은 무엇이라고 생각하시나요? 사례와 함께 답변 부탁드립니다.",
+      "gemma_response": "저의 가장 큰 강점은 문제 해결 능력이라고 생각합니다. 이전 프로젝트에서 예상치 못한 기술적 난관에 부딪혔을 때, 저는 체계적인 분석과 협업을 통해 성공적으로 해결책을 도출해냈습니다. 이러한 경험을 바탕으로 귀사에서도 적극적으로 기여하겠습니다.",
+      "gemma_latency_s": 2.36,
+      "gemma_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_response": "저의 가장 큰 강점은 방대한 정보를 신속하게 처리하고, 질문의 맥락에 맞춰 명확하고 간결한 답변을 생성하는 능력입니다. 예를 들어, 복잡한 질문에도 핵심을 파악하여 사용자분께 가장 적합한 정보를 효율적으로 전달해 드릴 수 있습니다.",
+      "gemini_latency_s": 2.97,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 3,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p06",
+      "category": "technical",
+      "prompt_text": "실시간 멀티모달 AI 시스템에서 레이턴시를 줄이기 위해 어떤 기술적 선택을 하실 건가요?",
+      "gemma_response": "실시간 멀티모달 AI 시스템의 레이턴시를 줄이기 위해서는 모델 경량화와 효율적인 추론 최적화에 중점을 두겠습니다. 특히, 모델 양자화나 지식 증류 기법을 적용하고, 고성능 하드웨어 가속을 활용하여 추론 속도를 극대화할 계획입니다.",
+      "gemma_latency_s": 2.52,
+      "gemma_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_response": "저희는 모델 경량화 기법(양자화, 가지치기 등)을 적용하여 연산 부하를 최소화하고, GPU/NPU와 같은 전용 하드웨어 가속기를 적극 활용할 것입니다. 또한, 효율적인 데이터 파이프라인 구성과 스트리밍/분산 추론 방식을 도입하여 실시간 처리 지연을 최소화하겠습니다.",
+      "gemini_latency_s": 5.88,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p07",
+      "category": "teamwork",
+      "prompt_text": "팀원과 의견이 달랐던 경험을 말씀해 주시고, 어떻게 해결하셨는지 알려 주세요.",
+      "gemma_response": "팀원과의 의견 차이가 발생했을 때, 저는 먼저 상대방의 의견을 경청하고 그 배경을 이해하려고 노력했습니다. 이후, 각 의견의 장단점을 객관적으로 비교하여 모두가 수용할 수 있는 최적의 대안을 함께 모색하여 합의점을 도출했습니다.",
+      "gemma_latency_s": 2.38,
+      "gemma_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_response": "네, 팀워크에 있어 매우 중요한 질문입니다. 팀원과 의견이 달랐던 구체적인 경험과 함께, 그 상황을 어떻게 해결해 나가셨는지 자세히 말씀해주시겠습니까?",
+      "gemini_latency_s": 2.96,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p08",
+      "category": "failure",
+      "prompt_text": "크게 실패했던 경험과 그로부터 배운 점을 한 가지만 말씀해 주세요.",
+      "gemma_response": "네, 크게 실패했던 경험과 그로부터 배운 점에 대해 말씀해 주시겠어요? 구체적인 경험과 그 경험을 통해 얻은 교훈을 중심으로 간결하게 말씀해 주시면 감사하겠습니다.",
+      "gemma_latency_s": 1.65,
+      "gemma_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 4
+      },
+      "gemini_response": "네, 실패 경험과 그로부터 배운 점은 성장 과정의 중요한 부분입니다. 지원자님의 경험 속에서 크게 실패했던 사례와 그를 통해 깨달으신 한 가지 교훈을 듣고 싶습니다.",
+      "gemini_latency_s": 3.15,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p09",
+      "category": "growth",
+      "prompt_text": "최근 1년간 가장 많이 성장했다고 느끼는 부분은 무엇인가요?",
+      "gemma_response": "최근 1년간 저는 특히 문제 해결 능력과 협업 능력이 크게 성장했다고 생각합니다. 이를 위해 적극적으로 새로운 지식을 습득하고 동료들과의 소통을 강화하는 노력을 기울였습니다.",
+      "gemma_latency_s": 1.71,
+      "gemma_rating": {
+        "fluency": 5,
+        "relevance": 5,
+        "register": 5
+      },
+      "gemini_response": "네, 지원자님의 지난 1년간 성장에 대한 질문이셨군요. 이 질문은 지원자님의 경험과 역량을 듣기 위한 것이오니, 편안하게 답변해 주시면 감사하겠습니다.",
+      "gemini_latency_s": 5.39,
+      "gemini_rating": {
+        "fluency": 4,
+        "relevance": 4,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    },
+    {
+      "id": "p10",
+      "category": "closing",
+      "prompt_text": "마지막으로 저희에게 궁금한 점이 있으시면 편하게 질문해 주세요.",
+      "gemma_response": "면접에 관심을 가지고 지원해 주셔서 감사합니다. 혹시 저희 회사의 향후 비전이나, 지원하신 직무에서 기대하는 가장 중요한 역량이 무엇인지 여쭤봐도 될까요?",
+      "gemma_latency_s": 1.58,
+      "gemma_rating": {
+        "fluency": 5,
+        "relevance": 3,
+        "register": 5
+      },
+      "gemini_response": "네, 질문 감사합니다. 현재는 추가로 궁금한 점은 없습니다. 오늘 귀한 시간 내어 면접에 참여해 주셔서 진심으로 감사합니다.",
+      "gemini_latency_s": 7.27,
+      "gemini_rating": {
+        "fluency": 5,
+        "relevance": 4,
+        "register": 5
+      },
+      "gemini_model": "gemini-2.5-flash"
+    }
+  ]
+}

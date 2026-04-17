@@ -6,5 +6,13 @@ Pillow>=10.0
 pytest>=8.0
 pytest-timeout>=2.3
 jiwer>=3.0
-google-generativeai>=0.8
+# google-genai (new SDK, `from google import genai`) is what the project actually uses;
+# the older google-generativeai package exports a different top-level module and is not
+# interchangeable. Installing both is fine; installing only google-generativeai is NOT.
+google-genai>=0.3
 rich>=13.0
+# elevenlabs is pulled in transitively through meeting.py when Gate #1 imports
+# gemini_chat_call; also used directly by Gate #3 for TTS first-byte timing.
+elevenlabs>=2.0
+# pandas is a transitive dependency of meeting.py -> send_audio_expressive.
+pandas>=2.0
