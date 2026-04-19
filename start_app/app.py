@@ -20,7 +20,6 @@
 
 
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from dialogue_manager.globals import *
 from dialogue_manager.usecases import *
@@ -699,7 +698,7 @@ def chat():
         return redirect(url_for('index'))
     
     if prerendered or active_meetings[session["meeting_id"]].instance is None:
-        iframe_port = ""
+        iframe_port = os.environ.get("PORT", "5001")
     else:
         iframe_port = active_meetings[session["meeting_id"]].instance.iframe_port
 
@@ -1038,14 +1037,28 @@ def update_user():
 @app.route("/upload_audio", methods=['POST'])
 def upload_audio():
     global active_meetings   
-    print("Audio upload received...")
+    import logging
+    logger = logging.getLogger("upload")
+    logger.setLevel(logging.DEBUG)
+    if not logger.handlers:
+        fh = logging.FileHandler("/tmp/sapien_upload.log")
+        fh.setLevel(logging.DEBUG)
+        logger.addHandler(fh)
+
+    logger.debug("Audio upload received")
     if 'audio_data' not in request.files:
-        print('No file part')
+        logger.debug("No file part")
         return 'No file part', 400
     audio_file = request.files["audio_data"]
 
     end_conversation = False
-    file_path = active_meetings[session["meeting_id"]].user_speech_dir
+    try:
+        meeting_id = session.get("meeting_id")
+        logger.debug(f"meeting_id: {meeting_id}, active_keys: {list(active_meetings.keys())}")
+        file_path = active_meetings[meeting_id].user_speech_dir
+    except (KeyError, TypeError) as e:
+        logger.error(f"Meeting lookup failed: {e}")
+        return "Meeting not found.", 400
 
     try:
         bot_path = Path(active_meetings[session["meeting_id"]].audiodir)
@@ -1065,17 +1078,24 @@ def upload_audio():
         convert_webm_to_wav(webm_dir, wav_dir)
         os.remove(webm_dir)
 
-        msg = meeting.speech2text.recognize_from_file(wav_dir, meeting.language)
+        from concurrent.futures import ThreadPoolExecutor
 
+        frame_data = request.form.get('frame_data', None)
+        t_start = time.time()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            stt_future = executor.submit(meeting.speech2text.recognize_from_file, wav_dir, meeting.language)
+            emo_future = executor.submit(get_emotion, frame_data) if frame_data else None
+
+            msg = stt_future.result()
+            user_emotion = emo_future.result() if emo_future else None
+
+        t_stt = time.time()
         if not msg.strip():
             msg = "..."
         print("[{}] {}: {}".format(time.time(), meeting.user.firstname, msg))
 
-        frame_data = request.form.get('frame_data', None)
-        user_emotion = None
-        if frame_data:
-            user_emotion = get_emotion(frame_data)
-
+        t_llm_start = time.time()
         response, emo = meeting.respond(msg, True, user_emotion=user_emotion)
 
         if "[Ending meeting]" in response:
@@ -1083,8 +1103,11 @@ def upload_audio():
             end_conversation = True
             print("End Conversation Triggered...")
 
+        t_llm_end = time.time()
         meeting.text2speech.create_wav(response, emo)
-        # meeting.text2speech.create_wav_11(response)
+        t_tts_end = time.time()
+
+        print(f"[Latency] STT+Emotion={t_stt - t_start:.2f}s LLM={t_llm_end - t_llm_start:.2f}s TTS={t_tts_end - t_llm_end:.2f}s Total={t_tts_end - t_start:.2f}s")
     except Exception as e:
         print(f"UPLOAD Error: {e}")
         traceback.print_exc()
